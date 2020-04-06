@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns:file="http://www.mulesoft.org/schema/mule/file"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
 	<file:config name="File_Config" doc:name="File Config" doc:id="7a4fc2c2-0b61-4d8f-9cb0-1926716678af" >
 		<file:connection workingDir="C:\Users\megwadha1\AnypointStudio\studio-workspace\ftp_salesforce" />
 	</file:config>
 	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="dd87ecb8-2989-4da5-b386-5d35741af6bc" >
-		<salesforce:cached-basic-connection username="megha.wadhawan-gywr@force.com" password="Jaisainath@11" securityToken="9T4Tt0JyifjGuLmM54JiS1cPX" />
+		<salesforce:cached-basic-connection username="megha@sapient.com" password="Jaisainath@11" securityToken="RA0DTsFGEx8QahZOVYI91gwDE" />
 	</salesforce:sfdc-config>
 	<flow name="ftp_salesforceFlow" doc:id="ea2bca6a-d83a-4b3f-8670-71c2ec8c8f23" >
 		<file:listener doc:name="On New or Updated File" doc:id="06cff9f8-2fa2-4937-bb2f-0de239aa32ca" config-ref="File_Config" directory="C:\Users\megwadha1\AnypointStudio\studio-workspace\ftp_salesforce\src\main\resources\input" autoDelete="true">
@@ -18,41 +19,52 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<fixed-frequency frequency="20000" />
 			</scheduling-strategy>
 		</file:listener>
-		<ee:transform doc:name="Transform Message" doc:id="c432fe22-302a-48a2-a744-5a0a9a007bad" >
+		<ee:transform doc:name="Transform Message" doc:id="74fbccea-41ea-4e76-833f-197f30858fb6" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload map (items,index) ->
-{
-	Id:items.Id,
-	Username: items.Username,
-	Firstname: items.Firstname,
-	Lastname: items.Lastname,
-	DisplayName: items.DisplayName,
-	JobTitle: items.JobTitle,
-	Department: items.Department,
-	OfficeNumber :items.OfficeNumber,
-	OfficePhone: items.OfficePhone,
-	Mobile: items.Mobile,
-	Phone: items.Phone,
-	Fax: items.Fax,
-	AddressCity: items.AddressCity,
-	StateOrProvince: items.StateOrProvince,
-	ZIP: items.ZIP,
-	Country: items.Country
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<salesforce:create type="Accounts" doc:name="Create" doc:id="e76d4b4c-abe5-45eb-84e1-7afa63da5fd7" config-ref="Salesforce_Config"/>
-		<ee:transform doc:name="Transform Message" doc:id="51734979-17ae-4f7e-920a-cd3894658717" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
+output application/java
 ---
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<file:write doc:name="Write" doc:id="4a0082f1-7d24-4f85-bcee-0300461437a2" path="\src\main\resources\out"/>
+		<batch:job jobName="ftp_salesforceBatch_Job" doc:id="5fa2fa2a-f950-491b-9400-fcd4bb83cd5d" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="962e5823-95b5-45b3-b614-3a02419e45bf" >
+					<ee:transform doc:name="Transform Message" doc:id="4f819a16-48fb-41c4-80bc-69db93cbcf4e" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	LastName: payload.Lastname,
+	FirstName: payload.Firstname,
+	MailingCity: payload.AddressCity,
+	MailingState: payload."State or Province",
+	MailingPostalCode: payload.ZIP,
+	MailingCountry: payload.Country,
+	Title: payload.JobTitle,
+	MobilePhone: payload.Mobile,
+	Department: payload.Department,
+	Phone: payload.Phone
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="1caf04b4-f5cd-4e6f-9b92-4a54468a8faa" size="3">
+						<salesforce:create doc:name="Create" doc:id="1e3edaa6-d4df-4a37-874f-45e45f8e03a8" config-ref="Salesforce_Config" type="Contact"/>
+						<ee:transform doc:name="Transform Message" doc:id="e22d5d3b-992a-4633-9439-4cacb58145ed" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="46a9e3a5-d467-4578-98d5-426fab975b3d" />
+			</batch:on-complete>
+		</batch:job>
 	</flow>
 </mule>

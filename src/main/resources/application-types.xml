@@ -14,11 +14,11 @@ type Accounts_CSV = Array<{|  Id: String,   Username: String,   Firstname: Strin
       </types:properties>
     </types:type>
   </types:catalog>
-  <types:enrichment select="#c432fe22-302a-48a2-a744-5a0a9a007bad">
+  <types:enrichment select="#74fbccea-41ea-4e76-833f-197f30858fb6">
     <types:processor-declaration>
       <types:input-event>
         <types:message>
-          <types:payload type="Accounts_CSV[]"/>
+          <types:payload type="Accounts_CSV"/>
         </types:message>
       </types:input-event>
     </types:processor-declaration>
